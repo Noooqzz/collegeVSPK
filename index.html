@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ВСПК - Интерактивная карта с панорамами</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <!-- Pannellum -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css">
+    <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<!-- Загрузочный экран -->
+<div class="loading" id="loading">
+    <div class="spinner"></div>
+    <h3>Загрузка карты колледжа</h3>
+    <div class="progress-bar"><div class="progress" id="loading-progress"></div></div>
+</div>
+
+<div class="app-container">
+    <header class="app-header">
+        <div class="logo">
+            <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+            <div class="logo-text">
+                <h1>Волгоградский социально-педагогический колледж</h1>
+                <div class="subtitle">Интерактивная карта с панорамами</div>
+            </div>
+        </div>
+        <div class="floor-nav">
+            <div class="floor-indicator">
+                <div class="indicator-label">ЭТАЖ</div>
+                <div class="floor-number" id="current-floor-number">1</div>
+            </div>
+            <div class="floor-selector" id="floor-selector">
+                <button class="floor-btn active" data-floor="1"><span class="btn-number">1</span><span class="btn-text">этаж</span></button>
+                <button class="floor-btn" data-floor="2"><span class="btn-number">2</span><span class="btn-text">этаж</span></button>
+                <button class="floor-btn" data-floor="3"><span class="btn-number">3</span><span class="btn-text">этаж</span></button>
+            </div>
+        </div>
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Поиск кабинета...">
+                <button id="search-btn" class="search-button"><i class="fas fa-search"></i></button>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="header-btn" id="fullscreen-btn"><i class="fas fa-expand"></i></button>
+            <button class="header-btn" id="help-btn"><i class="fas fa-question-circle"></i></button>
+        </div>
+    </header>
+
+    <main class="app-main">
+        <!-- ЛЕВАЯ ПАНЕЛЬ: Условные обозначения (только иконки, без цветных квадратов) -->
+        <aside class="left-sidebar">
+            <div class="sidebar-section">
+                <div class="section-title"><i class="fas fa-map-marker-alt"></i> Условные обозначения</div>
+                <div class="legend-items">
+                    <div class="legend-item"><i class="fas fa-door-open legend-icon"></i><span>Вход / Выход</span></div>
+                    <div class="legend-item"><i class="fas fa-shield-alt legend-icon"></i><span>Пост охраны</span></div>
+                    <div class="legend-item"><i class="fas fa-chalkboard-user legend-icon"></i><span>Учебный класс</span></div>
+                    <div class="legend-item"><i class="fas fa-laptop-code legend-icon"></i><span>Компьютерный класс</span></div>
+                    <div class="legend-item"><i class="fas fa-dumbbell legend-icon"></i><span>Спортивный зал</span></div>
+                    <div class="legend-item"><i class="fas fa-utensils legend-icon"></i><span>Столовая</span></div>
+                    <div class="legend-item"><i class="fas fa-restroom legend-icon"></i><span>Туалет</span></div>
+                    <div class="legend-item"><i class="fas fa-stairs legend-icon"></i><span>Лестница</span></div>
+                    <div class="legend-item"><i class="fas fa-arrows-alt-h legend-icon"></i><span>Коридор</span></div>
+                </div>
+            </div>
+            <div class="sidebar-section">
+                <div class="section-title"><i class="fas fa-fire-extinguisher"></i> Дополнительно</div>
+                <div class="legend-items">
+                    <div class="legend-item"><i class="fas fa-fire-extinguisher legend-icon"></i><span>Огнетушитель</span></div>
+                    <div class="legend-item"><i class="fas fa-bell legend-icon"></i><span>Пожарная кнопка</span></div>
+                    <div class="legend-item"><i class="fas fa-tint legend-icon"></i><span>Питьевой фонтанчик</span></div>
+                    <div class="legend-item"><i class="fas fa-tachometer-alt legend-icon"></i><span>Электрощит</span></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Центральная область: карта -->
+        <div class="map-area">
+            <div class="map-toolbar">
+                <div class="zoom-controls">
+                    <button class="zoom-btn" id="zoom-out"><i class="fas fa-search-minus"></i></button>
+                    <span id="zoom-level">100%</span>
+                    <button class="zoom-btn" id="zoom-in"><i class="fas fa-search-plus"></i></button>
+                    <button class="reset-btn" id="reset-view"><i class="fas fa-sync-alt"></i> Сброс</button>
+                </div>
+            </div>
+            <div class="map-container">
+                <div class="map-wrapper" id="map-wrapper">
+                    <img id="floor-image" src="" alt="План этажа">
+                    <div class="compass">N</div>
+                    <div class="floor-label" id="current-floor-label">1 этаж</div>
+                </div>
+            </div>
+            <div class="map-footer">
+                <div class="current-location">
+                    <i class="fas fa-location-dot"></i>
+                    <div>
+                        <div id="current-location-name">Не выбрано</div>
+                        <div style="font-size:0.7rem;" id="current-location-floor"></div>
+                    </div>
+                </div>
+                <div class="navigation-controls">
+                    <button class="nav-btn" id="nav-up"><i class="fas fa-arrow-up"></i></button>
+                    <div class="nav-horizontal">
+                        <button class="nav-btn" id="nav-left"><i class="fas fa-arrow-left"></i></button>
+                        <button class="nav-btn" id="nav-down"><i class="fas fa-arrow-down"></i></button>
+                        <button class="nav-btn" id="nav-right"><i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ПРАВАЯ ПАНЕЛЬ: Список помещений и информация -->
+        <aside class="right-sidebar">
+            <div class="sidebar-section">
+                <div class="section-title"><i class="fas fa-list"></i> Помещения на этаже</div>
+                <div id="floor-rooms-list" class="rooms-list"></div>
+            </div>
+            <div class="sidebar-section">
+                <div class="section-title"><i class="fas fa-info-circle"></i> Информация</div>
+                <div id="room-info" class="room-info-content" style="color:#94a3b8;">Выберите помещение из списка</div>
+            </div>
+            <div class="sidebar-section">
+                <div class="section-title"><i class="fas fa-street-view"></i> Панорама</div>
+                <button id="open-panorama-btn" class="action-btn"><i class="fas fa-360"></i> Открыть панораму этажа</button>
+                <p style="font-size:0.7rem; margin-top:0.5rem;">Кликните на кабинет → откроется его панорама</p>
+            </div>
+        </aside>
+    </main>
+
+    <footer class="app-footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Волгоградский социально-педагогический колледж</h4>
+                <p><i class="fas fa-map-marker-alt"></i> Кутузовская ул., 5, Волгоград</p>
+                <p><i class="fas fa-phone"></i> +7 (8442) 58-70-35</p>
+                <p><i class="fas fa-envelope"></i> info@vspk34.ru</p>
+            </div>
+            <div class="footer-section">
+                <h4>Режим работы</h4>
+                <p>пн-пт 08:30–17:00, перерыв 11:30–12:00</p>
+                <a href="https://www.vspc34.ru/" target="_blank"><i class="fas fa-external-link-alt"></i> Официальный сайт</a>
+            </div>
+            <div class="footer-section">
+                <h4>Разработка</h4>
+                <p><i class="fas fa-user"></i> Кулев Даниил</p>
+                <p><i class="fas fa-envelope"></i> danilkulev9269@gmail.com</p>
+                <p><i class="fas fa-code"></i> Интерактивная карта с панорамами</p>
+            </div>
+        </div>
+        <div class="footer-bottom">© 2026 Волгоградский социально-педагогический колледж. Все права защищены.</div>
+    </footer>
+</div>
+
+<!-- Модальное окно панорамы -->
+<div id="panorama-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-street-view"></i> Панорамный обзор</h2>
+            <button class="modal-close" id="close-panorama-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="panorama-viewer"></div>
+            <div class="pano-control-panel">
+                <button class="pano-nav-btn" id="prev-pano-btn">◀</button>
+                <span class="current-pano-title" id="current-pano-title">Панорама</span>
+                <div class="pano-scenes-list" id="pano-scenes-list"></div>
+                <button class="pano-nav-btn" id="next-pano-btn">▶</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модалка помощи -->
+<div id="help-modal" class="modal">
+    <div class="modal-content" style="max-width:500px;">
+        <div class="modal-header"><h3>Помощь</h3><button class="modal-close">&times;</button></div>
+        <div class="modal-body" style="padding:1rem;">
+            <p>🔹 Переключение этажей – кнопки вверху.<br>
+            🔹 Выбор кабинета – кликните по названию в списке справа – откроется панорама.<br>
+            🔹 Кнопка «Открыть панораму этажа» – панорама текущего этажа по умолчанию.<br>
+            🔹 Масштаб карты – колёсико мыши или кнопки +/-.<br>
+            🔹 Перетаскивание карты – зажатая левая кнопка мыши.<br>
+            🔹 Поиск – введите номер или название кабинета.</p>
+        </div>
+    </div>
+</div>
+
+<div class="notification" id="notification"><span id="notification-text"></span></div>
+    <script src="./panorama.js"></script>
+    <script src="./app.js"></script>
+</body>
+</html>
